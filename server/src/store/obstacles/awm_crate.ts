@@ -2,7 +2,7 @@ import { world } from "../..";
 import { RectHitbox, Vec2 } from "../../types/math";
 import { Obstacle } from "../../types/obstacle";
 import { GunColor } from "../../types/misc";
-import { randomBetween, spawnAmmo, spawnGun } from "../../utils";
+import { randomBetween, spawnGun } from "../../utils";
 
 export default class AWMCrate extends Obstacle {
 	type = "AWMCrate";
