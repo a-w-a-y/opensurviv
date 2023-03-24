@@ -19,6 +19,7 @@ interface AdditionalEntity {
 	canInteract?: boolean;
 	reloadTicks: number;
 	maxReloadTicks: number;
+	health: number;
 }
 
 class PlayerSupplier implements EntitySupplier {
@@ -98,6 +99,7 @@ export class FullPlayer extends Player {
 
 	copy(minEntity: MinEntity & AdditionalEntity) {
 		super.copy(minEntity);
+		this.health = minEntity.health;
 		this.boost = minEntity.boost;
 		this.scope = minEntity.scope;
 		this.canInteract = minEntity.canInteract || false;

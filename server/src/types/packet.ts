@@ -87,9 +87,9 @@ export class GamePacket implements IPacket {
 	entities: MinEntity[];
 	obstacles: MinObstacle[];
 	player: Player;
-	alivecount: Number;
+	alivecount: number;
 
-	constructor(entities: Entity[], obstacles: Obstacle[], player: Player, alivecount: Number) {
+	constructor(entities: Entity[], obstacles: Obstacle[], player: Player, alivecount: number) {
 		this.entities = entities.filter(entity => entity.position.addVec(player.position.inverse()).magnitudeSqr() < Math.pow(BASE_RADIUS * player.scope, 2)).map(entity => entity.minimize());
 		this.obstacles = obstacles.filter(obstacle => obstacle.position.addVec(player.position.inverse()).magnitudeSqr() < Math.pow(BASE_RADIUS * player.scope, 2)).map(obstacle => obstacle.minimize());
 		this.player = player;
