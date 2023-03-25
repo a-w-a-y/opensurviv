@@ -93,7 +93,8 @@ export class GamePacket {
 	entities!: MinEntity[];
 	obstacles!: MinObstacle[];
 	player!: any;
-	alivecount!: number;
+	alivecount!: Number
+	health!: Number
 }
 
 /// Packet from server containing map data
