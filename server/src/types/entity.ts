@@ -1,3 +1,4 @@
+import * as fs from "fs";
 import { clamp, ID } from "../utils";
 import { CircleHitbox, Hitbox, Line, RectHitbox, Vec2 } from "./math";
 import { Obstacle } from "./obstacle";
@@ -6,8 +7,13 @@ import { WEAPON_SUPPLIERS } from "../store/weapons";
 import { MinEntity, MinInventory } from "./minimized";
 import { CollisionType, GunColor } from "./misc";
 import { world } from "..";
+import { PUSH_THRESHOLD } from "../constants";
 
 export class Inventory {
+	// Maximum amount of things.
+	static maxAmmos: number[][];
+	static maxUtilities: Map<string, number>[];
+
 	holding: number;
 	weapons: Weapon[];
 	// Array of 2 numbers. Order: gun slots, melee slots
@@ -16,6 +22,7 @@ export class Inventory {
 	ammos: number[];
 	// Utilities. Maps ID to amount of util.
 	utilities: Map<string, number>;
+	backpackLevel = 0;
 
 	constructor(holding: number, slots: number[], weapons?: Weapon[], ammos?: number[], utilities?: Map<string, number>) {
 		this.holding = holding;
@@ -23,6 +30,11 @@ export class Inventory {
 		this.weapons = weapons || Array(slots.reduce((a, b) => a + b));
 		this.ammos = ammos || Array(Object.keys(GunColor).length / 2).fill(0);
 		this.utilities = utilities || new Map();
+	}
+
+	static {
+		this.maxAmmos = JSON.parse(fs.readFileSync("../data/amount/ammos.json", { encoding: "utf8" }));
+		this.maxUtilities = (<any[]>JSON.parse(fs.readFileSync("../data/amount/throwables.json", { encoding: "utf8" }))).map(x => new Map(Object.entries(x)));
 	}
 
 	getWeapon(index = -1) {
@@ -39,11 +51,7 @@ export class Inventory {
 	}
 
 	minimize() {
-		if(!this.getWeapon()){
-			console.log(this.weapons)
-			//this.holding = 0;
-		}
-		return <MinInventory> { holding: this.weapons[this.holding].minimize() };
+		return <MinInventory> { holding: this.weapons[this.holding].minimize(), backpackLevel: this.backpackLevel };
 		//If the player isn't holding anything no need to minimize it
 	}
 
@@ -62,6 +70,7 @@ export class Entity {
 	direction: Vec2 = Vec2.UNIT_X;
 	hitbox: Hitbox = CircleHitbox.ZERO;
 	noCollision = false;
+	collisionLayers = [-1]; // -1 means on all layers
 	vulnerable = true;
 	health = 100;
 	maxHealth = 100;
@@ -105,16 +114,17 @@ export class Entity {
 	}
 
 	// Hitbox collision check
-	collided(hitbox: Hitbox, position: Vec2, direction: Vec2) {
-		if (this.despawn) return CollisionType.NONE;
-		if (this.position.distanceTo(position) > this.hitbox.comparable + hitbox.comparable) return CollisionType.NONE;
+	collided(thing: Entity | Obstacle) {
+		if (this.id == thing.id || this.despawn) return CollisionType.NONE;
+		if (!this.collisionLayers.includes(-1) && !thing.collisionLayers.includes(-1) && !this.collisionLayers.some(layer => thing.collisionLayers.includes(layer))) return CollisionType.NONE;
+		if (this.position.distanceTo(thing.position) > this.hitbox.comparable + thing.hitbox.comparable) return CollisionType.NONE;
 		// For circle it is distance < sum of radii
-		if (this.hitbox.type === "circle" && hitbox.type === "circle") return this.position.addVec(position.inverse()).magnitudeSqr() < Math.pow((<CircleHitbox>this.hitbox).radius + (<CircleHitbox>hitbox).radius, 2) ? CollisionType.CIRCLE_CIRCLE : CollisionType.NONE;
-		else if (this.hitbox.type === "rect" && hitbox.type === "rect") {
+		if (this.hitbox.type === "circle" && thing.hitbox.type === "circle") return this.position.addVec(thing.position.inverse()).magnitudeSqr() < Math.pow((<CircleHitbox>this.hitbox).radius + (<CircleHitbox>thing.hitbox).radius, 2) ? CollisionType.CIRCLE_CIRCLE : CollisionType.NONE;
+		else if (this.hitbox.type === "rect" && thing.hitbox.type === "rect") {
 			// https://math.stackexchange.com/questions/1278665/how-to-check-if-two-rectangles-intersect-rectangles-can-be-rotated
 			// Using the last answer
 			const thisStartingPoint = this.position.addVec(new Vec2(-(<RectHitbox>this.hitbox).width / 2, -(<RectHitbox>this.hitbox).height / 2).addAngle(this.direction.angle()));
-			const thingStartingPoint = this.position.addVec(new Vec2(-(<RectHitbox>hitbox).width / 2, -(<RectHitbox>hitbox).height / 2).addAngle(direction.angle()));
+			const thingStartingPoint = this.position.addVec(new Vec2(-(<RectHitbox>thing.hitbox).width / 2, -(<RectHitbox>thing.hitbox).height / 2).addAngle(thing.direction.angle()));
 			const thisPoints = [
 				thisStartingPoint,
 				thisStartingPoint.addVec(new Vec2((<RectHitbox>this.hitbox).width, 0).addAngle(this.direction.angle())),
@@ -123,9 +133,9 @@ export class Entity {
 			];
 			const thingPoints = [
 				thingStartingPoint,
-				thingStartingPoint.addVec(new Vec2((<RectHitbox>hitbox).width, 0).addAngle(direction.angle())),
-				thingStartingPoint.addVec(new Vec2(0, (<RectHitbox>hitbox).height).addAngle(direction.angle())),
-				thingStartingPoint.addVec(new Vec2((<RectHitbox>hitbox).width, (<RectHitbox>hitbox).height).addAngle(direction.angle()))
+				thingStartingPoint.addVec(new Vec2((<RectHitbox>thing.hitbox).width, 0).addAngle(thing.direction.angle())),
+				thingStartingPoint.addVec(new Vec2(0, (<RectHitbox>thing.hitbox).height).addAngle(thing.direction.angle())),
+				thingStartingPoint.addVec(new Vec2((<RectHitbox>thing.hitbox).width, (<RectHitbox>thing.hitbox).height).addAngle(thing.direction.angle()))
 			];
 			var results: boolean[] = Array(4);
 			var ii: number;
@@ -136,8 +146,8 @@ export class Entity {
 			];
 
 			const thingVecs = [
-				new Vec2((<RectHitbox>hitbox).width, 0).addAngle(direction.angle()),
-				new Vec2(0, (<RectHitbox>hitbox).height).addAngle(direction.angle())
+				new Vec2((<RectHitbox>thing.hitbox).width, 0).addAngle(thing.direction.angle()),
+				new Vec2(0, (<RectHitbox>thing.hitbox).height).addAngle(thing.direction.angle())
 			];
 
 			for (const mainVec of thisVecs) {
@@ -163,9 +173,9 @@ export class Entity {
 			var rect: { hitbox: RectHitbox, position: Vec2, direction: Vec2 };
 			if (this.hitbox.type === "circle") {
 				circle = { hitbox: <CircleHitbox>this.hitbox, position: this.position, direction: this.direction };
-				rect = { hitbox: <RectHitbox>hitbox, position, direction };
+				rect = { hitbox: <RectHitbox>thing.hitbox, position: thing.position, direction: thing.direction };
 			} else {
-				circle = { hitbox: <CircleHitbox>hitbox, position, direction };
+				circle = { hitbox: <CircleHitbox>thing.hitbox, position: thing.position, direction: thing.direction };
 				rect = { hitbox: <RectHitbox>this.hitbox, position: this.position, direction: this.direction };
 			}
 			const rectStartingPoint = rect.position.addVec(new Vec2(-rect.hitbox.width / 2, -rect.hitbox.height / 2).addAngle(rect.direction.angle()));
@@ -220,6 +230,106 @@ export class Entity {
 
 	private pointInRect(a: Vec2, b: Vec2, c: Vec2, d: Vec2, p: Vec2) {
 		return (this.isLeft(a, b, p) > 0 && this.isLeft(b, c, p) > 0 && this.isLeft(c, d, p) > 0 && this.isLeft(d, a, p) > 0);
+	}
+
+	protected handleCircleCircleCollision(obstacle: Obstacle) {
+		const relative = this.position.addVec(obstacle.position.inverse());
+		this.position = obstacle.position.addVec(relative.scaleAll((obstacle.hitbox.comparable + this.hitbox.comparable) / relative.magnitude()));
+	}
+
+	protected handleCircleRectCenterCollision(obstacle: Obstacle) {
+		const rectVecs = [
+			new Vec2((<RectHitbox>obstacle.hitbox).width, 0).addAngle(obstacle.direction.angle()),
+			new Vec2(0, (<RectHitbox>obstacle.hitbox).height).addAngle(obstacle.direction.angle())
+		];
+		const centerToCenter = this.position.addVec(obstacle.position.inverse());
+		/* In the order of right up left down
+		 * Think of the rectangle as vectors
+		 *       up vec0
+		 *      +------->
+		 *      |
+		 * left |        right
+		 * vec1 |
+		 *      v
+		 *         down
+		 */
+		const horiProject = centerToCenter.projectTo(rectVecs[0]);
+		const vertProject = centerToCenter.projectTo(rectVecs[1]);
+		// Distances between center and each side
+		const distances = [
+			rectVecs[0].scaleAll(0.5).addVec(horiProject.inverse()),
+			rectVecs[1].scaleAll(-0.5).addVec(vertProject.inverse()),
+			rectVecs[0].scaleAll(-0.5).addVec(horiProject.inverse()),
+			rectVecs[1].scaleAll(0.5).addVec(vertProject.inverse())
+		];
+		var shortestIndex = 0;
+		for (let ii = 1; ii < distances.length; ii++)
+			if (distances[ii].magnitudeSqr() < distances[shortestIndex].magnitudeSqr())
+				shortestIndex = ii;
+
+		this.position = this.position.addVec(distances[shortestIndex]).addVec(distances[shortestIndex].unit().scaleAll(this.hitbox.comparable));
+	}
+
+	protected handleCircleRectPointCollision(obstacle: Obstacle) {
+		const rectStartingPoint = obstacle.position.addVec(new Vec2(-(<RectHitbox>obstacle.hitbox).width / 2, -(<RectHitbox>obstacle.hitbox).height / 2).addAngle(obstacle.direction.angle()));
+		const rectPoints = [
+			rectStartingPoint,
+			rectStartingPoint.addVec(new Vec2((<RectHitbox>obstacle.hitbox).width, 0).addAngle(obstacle.direction.angle())),
+			rectStartingPoint.addVec(new Vec2((<RectHitbox>obstacle.hitbox).width, (<RectHitbox>obstacle.hitbox).height).addAngle(obstacle.direction.angle())),
+			rectStartingPoint.addVec(new Vec2(0, (<RectHitbox>obstacle.hitbox).height).addAngle(obstacle.direction.angle()))
+		];
+		const intersections = Array(rectPoints.length).fill(false);
+		var counts = 0
+		for (let ii = 0; ii < rectPoints.length; ii++)
+			if (rectPoints[ii].distanceSqrTo(this.position) <= this.hitbox.comparable) {
+				intersections[ii] = true;
+				counts++;
+			}
+		if (counts == 2) return this.handleCircleRectLineCollision(obstacle);
+		var sum = 0;
+		for (let ii = 0; ii < intersections.length; ii++)
+			if (intersections[ii])
+				sum += ii;
+		const index = sum / counts;
+		const adjacents = [
+			rectPoints[((index - 1) < 0 ? rectPoints.length : index) - 1],
+			rectPoints[index],
+			rectPoints[(index + 1) % rectPoints.length]
+		];
+		const vecs = [
+			adjacents[1].addVec(adjacents[0].inverse()),
+			adjacents[2].addVec(adjacents[1].inverse())
+		];
+
+		for (let ii = 0; ii < vecs.length; ii++) {
+			const distance = new Line(adjacents[ii], adjacents[ii+1]).distanceTo(this.position);
+			this.position = this.position.addVec(vecs[ii].perpendicular().unit().scaleAll(this.hitbox.comparable - distance));
+		}
+	}
+
+	protected handleCircleRectLineCollision(obstacle: Obstacle) {
+		const rectStartingPoint = obstacle.position.addVec(new Vec2(-(<RectHitbox>obstacle.hitbox).width / 2, -(<RectHitbox>obstacle.hitbox).height / 2).addAngle(obstacle.direction.angle()));
+		const rectPoints = [
+			rectStartingPoint,
+			rectStartingPoint.addVec(new Vec2((<RectHitbox>obstacle.hitbox).width, 0).addAngle(obstacle.direction.angle())),
+			rectStartingPoint.addVec(new Vec2((<RectHitbox>obstacle.hitbox).width, (<RectHitbox>obstacle.hitbox).height).addAngle(obstacle.direction.angle())),
+			rectStartingPoint.addVec(new Vec2(0, (<RectHitbox>obstacle.hitbox).height).addAngle(obstacle.direction.angle()))
+		];
+		const distances: number[] = Array(rectPoints.length);
+		const vecs: Vec2[] = Array(rectPoints.length);
+		for (let ii = 0; ii < rectPoints.length; ii++) {
+			const point1 = rectPoints[ii], point2 = rectPoints[(ii + 1) % rectPoints.length];
+			vecs[ii] = point2.addVec(point1.inverse());
+			distances[ii] = new Line(point1, point2).distanceTo(this.position);
+		}
+		var shortestIndex = 0;
+		for (let ii = 1; ii < distances.length; ii++)
+			if (distances[ii] < distances[shortestIndex])
+				shortestIndex = ii;
+		
+		const push = vecs[shortestIndex].perpendicular().unit().scaleAll(this.hitbox.comparable - distances[shortestIndex]);
+		if (Math.abs(push.y) < PUSH_THRESHOLD && Math.abs(push.x) < PUSH_THRESHOLD) return;
+		this.position = this.position.addVec(push);
 	}
 }
 

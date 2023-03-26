@@ -6,8 +6,6 @@ import { EntitySupplier } from "../../types/supplier";
 import { circleFromCenter } from "../../utils";
 import Player from "./player";
 
-const images = new Map<string, HTMLImageElement & { loaded: boolean }>();
-
 interface AdditionalEntity {
 	name: string;
 }
@@ -23,6 +21,7 @@ export default class Grenade extends Entity {
 	type = Grenade.TYPE;
 	// Used for rendering Grenade size
 	name!: string;
+	zIndex = 8;
 
 	constructor(minEntity: MinEntity & AdditionalEntity) {
 		super(minEntity);

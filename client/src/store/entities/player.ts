@@ -48,6 +48,7 @@ export default class Player extends Entity {
 		if (typeof minEntity.inventory.holding === "number") {
 			const inventory = <Inventory>minEntity.inventory;
 			this.inventory = new Inventory(inventory.holding, inventory.slots, inventory.weapons.map(w => w ? castCorrectWeapon(w, w.type == WeaponType.GUN ? (<GunWeapon>w).magazine : 0) : w), inventory.ammos, inventory.utilities);
+			this.inventory.backpackLevel = inventory.backpackLevel;
 		} else this.inventory = new PartialInventory(<MinInventory>minEntity.inventory);
 		if (this.despawn) this.zIndex = 7;
 	}
@@ -58,12 +59,19 @@ export default class Player extends Entity {
 		ctx.translate(canvas.width / 2 + relative.x * scale, canvas.height / 2 + relative.y * scale);
 		if (!this.despawn) {
 			ctx.rotate(this.direction.angle());
+
+			if (this.inventory.backpackLevel) {
+				ctx.fillStyle = "#675230";
+				ctx.lineWidth = radius / 6;
+				ctx.strokeStyle = "#000000";
+				circleFromCenter(ctx, -radius * 0.4 * this.inventory.backpackLevel, 0, radius * 0.9, true, true);
+			}
+
 			ctx.fillStyle = "#F8C675";
 			circleFromCenter(ctx, 0, 0, radius);
 			// We will leave the transform for the weapon
 			// If player is holding nothing, render fist
 			var weapon = WEAPON_SUPPLIERS.get("fists")!.create();
-			//console.log(this.inventory);
 			if (typeof this.inventory.holding === "number") weapon = (<Inventory>this.inventory).getWeapon()!;
 			else weapon = (<PartialInventory>this.inventory).holding;
 			weapon.render(this, canvas, ctx, scale);

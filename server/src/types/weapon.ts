@@ -75,8 +75,12 @@ export class MeleeWeapon extends Weapon {
 			var combined: (Entity | Obstacle)[] = [];
 			combined = combined.concat(entities, obstacles);
 			const position = attacker.position.addVec(this.offset.addAngle(attacker.direction.angle()));
+			const dummy = new Entity();
+			dummy.hitbox = this.hitbox;
+			dummy.position = position;
+			dummy.direction = attacker.direction;
 			for (const thing of combined)
-				if (thing.collided(this.hitbox, position, attacker.direction) && thing.id != attacker.id) {
+				if (thing.collided(dummy) && thing.id != attacker.id) {
 					thing.damage(this.damage);
 					if (!this.cleave) break;
 				}
@@ -88,6 +92,7 @@ export class GunWeapon extends Weapon {
 	// More like constants
 	type = WeaponType.GUN;
 	color: GunColor;
+	ammo: number; // Ammo spawn
 	bullets: number;
 	spread: number;
 	moveSpread: number;
@@ -104,6 +109,7 @@ export class GunWeapon extends Weapon {
 	constructor(id: string, data: GunData) {
 		super(id, data.name, (data.normal.delay.firing / 1000) * TICKS_PER_SECOND, data.normal.speed.equip, data.normal.speed.attack, data.auto || false, data.droppable);
 		this.color = data.color;
+		this.ammo = data.ammo;
 		this.bullets = data.normal.bullets;
 		this.spread = data.normal.spread.still;
 		this.moveSpread = data.normal.spread.still;
