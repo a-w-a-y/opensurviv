@@ -197,3 +197,8 @@ window.onwheel = (event) => {
 // 	if (!connected) return;
 // 	ws.send(encode(new PingPacket(event.button)))
 // }
+window.onbeforeunload = (event) => {
+	if(connected){
+		return true;
+	}
+}
