@@ -1,0 +1,38 @@
+{
+  "name": "opensurviv",
+  "version": "1.0.0",
+  "description": "An open-source implementation of surviv.io",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "deep-install": "npm i && cd server && npm i && cd ../client && npm i",
+    "gameserv": "cd server && npm run build && npm start",
+    "webserv": "cd client && npm run build && cd .. && npm run build && node lib/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/North-West-Wind/opensurviv.git"
+  },
+  "keywords": [
+    "surviv.io"
+  ],
+  "author": "NorthWestWind",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/North-West-Wind/opensurviv/issues"
+  },
+  "homepage": "https://github.com/North-West-Wind/opensurviv#readme",
+  "devDependencies": {
+    "@types/mime-types": "^2.1.1",
+    "@types/node": "^18.15.5",
+    "@typescript-eslint/eslint-plugin": "^5.46.1",
+    "@typescript-eslint/parser": "^5.46.1",
+    "eslint": "^8.28.0",
+    "eslint-plugin-unused-imports": "^2.0.0",
+    "typescript": "^5.0.2"
+  },
+  "dependencies": {
+    "mime-types": "^2.1.35"
+  }
+}

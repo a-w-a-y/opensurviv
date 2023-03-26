@@ -192,11 +192,6 @@ window.onwheel = (event) => {
 	const delta = event.deltaY < 0 ? -1 : 1;
 	ws.send(encode(new SwitchWeaponPacket(delta)));
 }
-window.onbeforeunload = function(){
-	if(connected){
-		return connected;
-	}
-}
 // /** @param {MouseEvent} event */
 // window.oncontextmenu = (event) => {
 // 	if (!connected) return;
