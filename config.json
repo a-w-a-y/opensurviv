@@ -1,0 +1,7 @@
+{
+	"ssl": true,
+	"keyFile": "~/Documents/ssl_certs/opensurviv.run.place.key",
+	"certFile": "~/Documents/ssl_certs/opensurviv.run.place.cer",
+	"hostName": "localhost",
+	"port": "80"
+}
