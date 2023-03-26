@@ -1,6 +1,7 @@
 import * as ws from "ws";
+import { App, SSLApp, DEDICATED_COMPRESSOR_256KB } from "uWebSockets.js";
 import { encode, decode } from "msgpack-lite";
-import { ID, wait } from "./utils";
+import { ID, wait, Config, GlobalHeaders, WhitelistDirs } from "./utils";
 import { ClientPacketResolvable, MousePressPacket, MouseReleasePacket, MouseMovePacket, MovementPressPacket, MovementReleasePacket, GamePacket, ParticlesPacket, MapPacket, AckPacket, SwitchWeaponPacket } from "./types/packet";
 import { DIRECTION_VEC, MAP_SIZE, TICKS_PER_SECOND } from "./constants";
 import { Vec2 } from "./types/math";
@@ -9,19 +10,105 @@ import { Particle } from "./types/particle";
 import { World } from "./types/terrain";
 import { Plain, Pond, River, Sea } from "./store/terrains";
 import { Tree, Bush, Crate, Stone, MosinTree, SovietCrate, GrenadeCrate, AWMCrate, Barrel, AK47Stone } from "./store/obstacles";
+import * as fs from "fs";
+import * as mimetypes from "mime-types";
+import * as path from "path";
 
 export var ticksElapsed = 0;
 
+let app;
+
+if(Config.ssl){
+	app = SSLApp({
+		key_file_name: Config.keyFile,
+		cert_file_name: Config.certFile
+	});
+}
+else{
+	app = App();
+}
+
+function getIp(arrbuf: ArrayBuffer){
+	return [...new Uint8Array(arrbuf)].join(":");
+}
+
+function logRequest(res: any, req: any){
+	var d = new Date();
+	console.log(`[${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()} ${("00" + d.getHours().toString()).slice(-2)}:${("00" + d.getMinutes().toString()).slice(-2)}:${("00" + d.getSeconds().toString()).slice(-2)}.${d.getMilliseconds()}][${getIp(res.getRemoteAddress())}] Incoming request to ${req.getUrl()}`);
+}
+
+//the discord invite link
+app.get("/discord", (res: any, req: any) => {
+	logRequest(res, req);
+	res.writeStatus("308 Permanent Redirect");
+	Object.keys(GlobalHeaders).forEach(function(key: string){
+		res.writeHeader(key, GlobalHeaders[key as keyof typeof GlobalHeaders]);
+	});
+	res.writeHeader("Location", "https://discord.gg/jKQEVT7Vd3");
+	res.end("<h1>Redirecting...</h1><br /><a href=\"https://discord.gg/jKQEVT7Vd3\">Click here if you are not redirected</a>");
+});
+
+app.get("/", (res: any, req: any) => {
+	logRequest(res, req);
+	res.writeStatus("200 OK");
+	res.writeHeader("Content-Type", "text/html");
+	Object.keys(GlobalHeaders).forEach(function(key: string){
+		res.writeHeader(key, GlobalHeaders[key as keyof typeof GlobalHeaders]);
+	});
+	var index = fs.readFileSync("../public/index.html");
+	res.end(index);
+})
+
+app.get("/*", (res: any, req: any) => {
+	logRequest(res, req);
+	Object.keys(GlobalHeaders).forEach(function(key: string){
+		res.writeHeader(key, GlobalHeaders[key as keyof typeof GlobalHeaders]);
+	});
+	let isWhitelisted = false;
+	WhitelistDirs.forEach(function(dir){
+		if(req.getUrl().startsWith("/" + dir)){
+			isWhitelisted = true;
+		}
+	})
+	if(isWhitelisted){
+        var baseDir = path.join(__dirname, "../../public");
+        var filePath = path.join(baseDir, req.getUrl());
+        var data = fs.readFileSync(filePath);
+        var ext = req.getUrl().split(".");
+        ext = ext[ext.length-1];
+        res.writeHeader("Content-Type", mimetypes.lookup(ext));
+        res.end(data);
+	}
+	else{
+		res.writeStatus("404 Not Found");
+		res.end("<h1>404 Not Found</h1>")
+	}
+});
+
+app.ws("/play")
+//todo: reimplement the websocket handling that is commented out below in this type of framework
+//might as well as add matchmaking then...
+app.listen(Config.hostName, Config.port, (socket: any) => {
+	if(socket){
+		console.log("Listening on " + Config.hostName + ":" + Config.port.toString());
+	}
+	else{
+		console.log("Failed to listen");
+	}
+
+});
+
+/*
 const server = new ws.Server({ port: 8080 });
 server.once("listening", () => console.log(`WebSocket Server listening at port ${server.options.port}`));
 
 const sockets = new Map<string, ws.WebSocket>();
-
+*/
 // Initialize the map
 export const world = new World(new Vec2(MAP_SIZE[0], MAP_SIZE[1]), new Plain());
 
 // Start of testing section
-
+/*
 // Let's add some ponds
 for (let ii = 0; ii < 5; ii++) world.terrains.push(new Pond());
 // And a river
@@ -44,6 +131,7 @@ for (let ii = 0; ii < 50; ii++) world.obstacles.push(new Barrel());
 for (let ii = 0; ii < 15; ii++) world.obstacles.push(new AK47Stone());
 */
 //smaller map
+/*
 for (let ii = 0; ii < 25; ii++) world.obstacles.push(new Tree());
 for (let ii = 0; ii < 1; ii++) world.obstacles.push(new MosinTree());
 for (let ii = 0; ii < 10; ii++) world.obstacles.push(new SovietCrate());
@@ -168,12 +256,12 @@ server.on("connection", async socket => {
 		}
 	});
 });
-
+*/
 var pendingParticles: Particle[] = [];
 export function addParticles(...particles: Particle[]) {
 	pendingParticles.push(...particles);
 }
-
+/*
 setInterval(() => {
 	world.tick();
 	// Filter players from entities and send them packets
@@ -186,4 +274,4 @@ setInterval(() => {
 	});
 	pendingParticles = [];
 	world.postTick();
-}, 1000 / TICKS_PER_SECOND);
+}, 1000 / TICKS_PER_SECOND);*/

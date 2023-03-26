@@ -4,11 +4,12 @@
   "description": "An open-source implementation of surviv.io",
   "main": "lib/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc",
-    "deep-install": "npm i && cd server && npm i && cd ../client && npm i",
-    "gameserv": "cd server && npm run build && npm start",
-    "webserv": "cd client && npm run build && cd .. && node src/webserver.js"
+    "test": "npm run build && npm run start",
+    "build": "npm run build-client && npm run build-server",
+    "build-client": "cd client && tsc && browserify tmp/game.js -o tmp/bundle.js && uglifyjs tmp/bundle.js -m -c -o ../public/scripts/bundle.min.js && cd ..",
+    "build-server": "cd server && tsc && cd ..",
+    "deep-install": "npm i && cd server && npm i && cd ../client && npm i && cd ..",
+    "start": "cd server && node lib/index.js"
   },
   "repository": {
     "type": "git",
@@ -28,7 +29,12 @@
     "@types/msgpack-lite": "^0.1.8",
     "@types/node": "^18.15.5",
     "msgpack-lite": "^0.1.26",
-    "typescript": "^5.0.2"
+    "typescript": "^5.0.2",
+    "browserify": "^17.0.0",
+    "eslint": "^8.28.0",
+    "eslint-plugin-unused-imports": "^2.0.0",
+    "typescript": "^4.7.2",
+    "uglify-js": "^3.17.4"
   },
   "dependencies": {
     "mime-types": "^2.1.35"

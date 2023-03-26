@@ -1,4 +1,5 @@
 import * as crypto from "crypto";
+import * as fs from "fs";
 
 // ID generator
 export function ID() {
@@ -58,3 +59,15 @@ export function spawnLoot(type: string, id: string, color: GunColor, position: V
         spawnAmmo(amount, color, position)
     }
 }
+//config for server, maybe even client (prob not)
+export const Config = JSON.parse(fs.readFileSync("../config.json") as unknown as string);
+
+//headers to always use for the server
+export const GlobalHeaders = {
+    "X-XSS-Protection": "1; mode=block",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Referrer-Policy": "same-origin"
+}
+
+//only allow read to these directories
+export const WhitelistDirs = ["assets", "scripts", "abuseipdb-verification.html", "favicon.ico"];
