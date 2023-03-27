@@ -20,7 +20,8 @@
   },
   "homepage": "https://github.com/North-West-Wind/opensurviv#readme",
   "devDependencies": {
-    "@eslint/create-config": "^0.4.1"
+    "@eslint/create-config": "^0.4.1",
+    "ws": "^8.7.0"
   },
   "dependencies": {
     "msgpack-lite": "^0.1.26",

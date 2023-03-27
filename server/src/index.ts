@@ -1,4 +1,4 @@
-import * as ws from "ws";
+//import * as ws from "ws";
 import { App, SSLApp, DEDICATED_COMPRESSOR_256KB } from "uWebSockets.js";
 import { encode, decode } from "msgpack-lite";
 import { ID, wait, Config, GlobalHeaders, WhitelistDirs } from "./utils";
@@ -15,6 +15,10 @@ import * as mimetypes from "mime-types";
 import * as path from "path";
 
 export var ticksElapsed = 0;
+export const world = new World(new Vec2(MAP_SIZE[0], MAP_SIZE[1]), new Plain());
+const games = {
+	"dev_game_id": world
+}
 
 let app;
 
@@ -48,6 +52,21 @@ app.get("/discord", (res: any, req: any) => {
 	res.end("<h1>Redirecting...</h1><br /><a href=\"https://discord.gg/jKQEVT7Vd3\">Click here if you are not redirected</a>");
 });
 
+app.post("/find_game", (res: any, req: any) => {
+	//matchmaking, take care of it later
+	var gameFound = {
+		"gameId": Object.keys(games)[0],
+		"host": Config.ssl ? "wss://" : "ws://" + Config.hostName,
+		"region": "na-west"
+	}
+	res.writeStatus("200 OK");
+	Object.keys(GlobalHeaders).forEach(function(key: string){
+		res.writeHeader(key, GlobalHeaders[key as keyof typeof GlobalHeaders]);
+	});
+	res.writeHeader("Content-Type", "application/json");
+	res.end(JSON.stringify(gameFound));
+})
+
 app.get("/", (res: any, req: any) => {
 	logRequest(res, req);
 	res.writeStatus("200 OK");
@@ -57,9 +76,11 @@ app.get("/", (res: any, req: any) => {
 	});
 	var index = fs.readFileSync("../public/index.html");
 	res.end(index);
-})
+});
 
 app.get("/*", (res: any, req: any) => {
+	//any other url where there's too many to specifically define, eg asset/*
+	//scripts too
 	logRequest(res, req);
 	Object.keys(GlobalHeaders).forEach(function(key: string){
 		res.writeHeader(key, GlobalHeaders[key as keyof typeof GlobalHeaders]);
@@ -85,7 +106,22 @@ app.get("/*", (res: any, req: any) => {
 	}
 });
 
-app.ws("/play")
+app.ws("/play", {
+	compression: DEDICATED_COMPRESSOR_256KB,
+	idleTimeout: 60,
+	upgrade: (res, req, context) => {
+		//upgrade connection, initial connection IN
+	},
+	open: (socket) => {
+		//if the socket is opened
+	},
+	message: (socket, message) => {
+		//when a msg is recieved from the socket
+	},
+	close: (socket) => {
+		//when a socket is closed
+	}
+})
 //todo: reimplement the websocket handling that is commented out below in this type of framework
 //might as well as add matchmaking then...
 app.listen(Config.hostName, Config.port, (socket: any) => {
@@ -105,7 +141,7 @@ server.once("listening", () => console.log(`WebSocket Server listening at port $
 const sockets = new Map<string, ws.WebSocket>();
 */
 // Initialize the map
-export const world = new World(new Vec2(MAP_SIZE[0], MAP_SIZE[1]), new Plain());
+//export const world = new World(new Vec2(MAP_SIZE[0], MAP_SIZE[1]), new Plain());
 
 // Start of testing section
 /*
