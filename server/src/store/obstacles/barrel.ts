@@ -19,6 +19,9 @@ export default class Barrel extends Obstacle {
 			if (entity.collided(this) && entity.type === "player" && this.health === 0 && this.madePlayerDie === false) {
 				// Damage the entity
 				entity.damage(100);
+				const play = require('audio-play');
+				const load = require('audio-loader');
+				load('./src/assets/sounds/barrel.mp3').then(play);
 				this.madePlayerDie = true;
 			}
 		}

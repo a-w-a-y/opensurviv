@@ -11,4 +11,10 @@ export default class Tree extends Obstacle {
 		super(world, new CircleHitbox(1.5).scaleAll(salt), new CircleHitbox(0.8).scaleAll(salt), 180, 180);
 		while (world.terrainAtPos(this.position).id != "plain" || world.obstacles.find(obstacle => obstacle.collided(this))) this.position = world.size.scale(Math.random(), Math.random());
 	}
+	die(){
+		super.die();
+		const play = require('audio-play');
+		const load = require('audio-loader');
+		load('./src/assets/sounds/tree.mp3').then(play);
+	}
 }

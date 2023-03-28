@@ -16,6 +16,9 @@ export default class SovietCrate extends Obstacle {
 
 	die() {
 		super.die();
+		const play = require('audio-play');
+		const load = require('audio-loader');
+		load('./src/assets/sounds/soviet_crate.mp3').then(play);
 		const entities = LOOT_TABLES.get(SovietCrate.LOOT_TABLE)?.roll();
 		if (entities) {
 			world.entities.push(...entities.map(e => {

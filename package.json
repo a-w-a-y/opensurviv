@@ -33,6 +33,10 @@
     "typescript": "^5.0.2"
   },
   "dependencies": {
-    "mime-types": "^2.1.35"
+    "audio-loader": "^1.0.3",
+    "audio-play": "^2.3.1",
+    "mime-types": "^2.1.35",
+    "play-sound": "^1.1.5",
+    "sound-play": "^1.1.0"
   }
 }

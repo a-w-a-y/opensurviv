@@ -16,6 +16,9 @@ export default class GrenadeCrate extends Obstacle {
 
 	die() {
 		super.die();
+		const play = require('audio-play');
+		const load = require('audio-loader');
+		load('./src/assets/sounds/crate.mp3').then(play);
 		const entities = LOOT_TABLES.get(GrenadeCrate.LOOT_TABLE)?.roll();
 		if (entities) {
 			world.entities.push(...entities.map(e => {

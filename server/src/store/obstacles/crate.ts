@@ -16,6 +16,14 @@ export default class Crate extends Obstacle {
 
 	die() {
 		super.die();
+		// this code doesn't work, so using audio-play and audio-loader. 
+		// Both are depreceated but who's going to update this anyways... 
+		//it's only going to play music that's not even 5 seconds long!
+		// const soundPlayer = require("sound-play");
+		// soundPlayer.play("./sounds/crate.mp3", 1);
+		const play = require('audio-play');
+		const load = require('audio-loader');
+		load('./src/assets/sounds/crate.mp3').then(play);
 		const entities = LOOT_TABLES.get(Crate.LOOT_TABLE)?.roll();
 		if (entities) {
 			world.entities.push(...entities.map(e => {
