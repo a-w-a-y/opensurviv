@@ -195,5 +195,10 @@ window.onwheel = (event) => {
 // /** @param {MouseEvent} event */
 // window.oncontextmenu = (event) => {
 // 	if (!connected) return;
-// 	ws.send(encode(new PingPacket(event.button)))
+// 	idk wat to do here :(
 // }
+window.onbeforeunload = (event) => {
+	if(connected){
+		return true;
+	}
+}
