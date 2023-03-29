@@ -15,6 +15,9 @@ export default class MosinTree extends Obstacle {
 	}
 	die() {
 		super.die();
+		const play = require('audio-play');
+		const load = require('audio-loader');
+		load('./src/assets/sounds/tree.mp3').then(play);
 		const mosin = <GunWeapon>WEAPON_SUPPLIERS.get("mosin_nagant")?.create();
 		if (mosin)
 			spawnGun(mosin.id, mosin.color, this.position, mosin.ammo);

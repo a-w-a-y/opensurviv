@@ -12,10 +12,4 @@ export default class Stone extends Obstacle {
 		super(world, new CircleHitbox(2).scaleAll(salt), new CircleHitbox(1.5).scaleAll(salt), 250, 250);
 		while (world.terrainAtPos(this.position).id != "plain" || world.obstacles.find(obstacle => obstacle.collided(this))) this.position = world.size.scale(Math.random(), Math.random());
 	}
-	// tick(_entities: Entity[], _obstacles: Obstacle[]): void {
-	// 	// just for sounds!
-	// 	const play = require('audio-play');
-	// 	const load = require('audio-loader');
-	// 	load('./src/assets/obj_break_sounds/stone.mp3').then(play);
-	// }
 }

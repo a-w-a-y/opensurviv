@@ -1,14 +1,16 @@
 import * as ws from "ws";
 import { encode, decode } from "msgpack-lite";
 import { ID, wait } from "./utils";
-import { ClientPacketResolvable, MousePressPacket, MouseReleasePacket, MouseMovePacket, MovementPressPacket, MovementReleasePacket, GamePacket, ParticlesPacket, MapPacket, AckPacket, SwitchWeaponPacket } from "./types/packet";
+import { ClientPacketResolvable, MousePressPacket, MouseReleasePacket, MouseMovePacket, MovementPressPacket, MovementReleasePacket, GamePacket, ParticlesPacket, MapPacket, AckPacket, SwitchWeaponPacket, PlaySoundPacket } from "./types/packet";
 import { DIRECTION_VEC, MAP_SIZE, TICKS_PER_SECOND } from "./constants";
 import { Vec2 } from "./types/math";
 import { Player } from "./store/entities";
 import { Particle } from "./types/particle";
 import { World } from "./types/terrain";
 import { Plain, Pond, River, Sea } from "./store/terrains";
-import { Tree, Bush, Crate, Stone, MosinTree, SovietCrate, GrenadeCrate, Barrel, AK47Stone } from "./store/obstacles";
+import { Tree, Bush, Crate, Stone, MosinTree, SovietCrate, GrenadeCrate, Barrel, AK47Stone, AWMCrate } from "./store/obstacles";
+import { MeleeWeapon, WeaponType } from "./types/weapon";
+import { Entity } from "./types/entity";
 
 export var ticksElapsed = 0;
 
@@ -52,7 +54,7 @@ for (let ii = 0; ii < 25; ii++) world.obstacles.push(new Crate());
 for (let ii = 0; ii < 25; ii++) world.obstacles.push(new Stone());
 for (let ii = 0; ii < 15; ii++) world.obstacles.push(new GrenadeCrate());
 //crashing server
-//for (let ii = 0; ii < 1; ii++) world.obstacles.push(new AWMCrate());
+for (let ii = 0; ii < 1; ii++) world.obstacles.push(new AWMCrate());
 for (let ii = 0; ii < 25; ii++) world.obstacles.push(new Barrel());
 for (let ii = 0; ii < 1; ii++) world.obstacles.push(new AK47Stone());
 // End of testing section

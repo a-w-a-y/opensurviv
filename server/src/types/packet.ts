@@ -65,6 +65,12 @@ export class ReloadWeaponPacket {
 	type = "reloadweapon";
 }
 
+export class PlaySoundPacket {
+	type = "playsound";
+}
+export class AttackPlaySoundPacket {
+	type = "attackplaysound";
+}
 export type ClientPacketResolvable = PingPacket | MousePressPacket | MouseReleasePacket | MouseMovePacket | MovementPressPacket | MovementReleasePacket | InteractPacket | SwitchWeaponPacket | ReloadWeaponPacket;
 
 export class AckPacket implements IPacket {
