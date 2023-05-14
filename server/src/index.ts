@@ -157,21 +157,25 @@ server.on("connection", async socket => {
 				break;
 			case "switchweapon":
 				const swPacket = <SwitchWeaponPacket>decoded;
-				if (swPacket.setMode) {
-					if (player.inventory.getWeapon(swPacket.delta))
-						player.inventory.holding = swPacket.delta;
-				} else {
-					const unitDelta = swPacket.delta < 0 ? -1 : 1;
-					var holding = player.inventory.holding + swPacket.delta;
-					if (holding < 0) holding += player.inventory.weapons.length;
-					else holding %= player.inventory.weapons.length;
-					while (!player.inventory.getWeapon(holding)) {
-						holding += unitDelta;
+				//if delta <0 its invalid, pressing 0 on the client sends this packet, validate client's packets
+				if(swPacket.delta >= 0 && swPacket.delta <= 3){
+					if (swPacket.setMode) {
+						if (player.inventory.getWeapon(swPacket.delta))
+							player.inventory.holding = swPacket.delta;
+					} else {
+						const unitDelta = swPacket.delta < 0 ? -1 : 1;
+						var holding = player.inventory.holding + swPacket.delta;
 						if (holding < 0) holding += player.inventory.weapons.length;
 						else holding %= player.inventory.weapons.length;
+						while (!player.inventory.getWeapon(holding)) {
+							holding += unitDelta;
+							if (holding < 0) holding += player.inventory.weapons.length;
+							else holding %= player.inventory.weapons.length;
+						}
+						player.inventory.holding = holding;
 					}
-					player.inventory.holding = holding;
 				}
+				//don't do anything if it's invalid
 				break;
 			case "reloadweapon":
 				player.reload();
